@@ -5,6 +5,11 @@ const jwt = require("jsonwebtoken");
 const User = require("../../service/models/user.js");
 const JwtAuthMiddleware = require("../../middleware/auth.js");
 const dotenv = require("dotenv");
+const generateAvatarURL = require("../../service/models/avatar.js");
+const upload = require("../../middleware/upload.js");
+const path = require("path");
+const jimp = require("jimp");
+const fs = require("fs");
 
 dotenv.config();
 
@@ -22,6 +27,7 @@ const userSchema = Joi.object({
     .valid("starter", "pro", "business")
     .default("starter"),
   token: Joi.string().allow(null).default(null),
+  avatarURL: Joi.string().uri().optional(),
 });
 
 router.post("/users/register", async (req, res) => {
@@ -41,17 +47,20 @@ router.post("/users/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const avatarURL = generateAvatarURL(email);
+
     const newUser = new User({
       email,
       password: hashedPassword,
       subscription: "starter",
+      avatarURL,
     });
 
     await newUser.save();
 
     res
       .status(201)
-      .json({ user: { email, subscription: newUser.subscription } });
+      .json({ user: { email, subscription: newUser.subscription, avatarURL } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });
@@ -111,5 +120,35 @@ router.get("/users/current", JwtAuthMiddleware(), (req, res) => {
     subscription: req.user.subscription,
   });
 });
+
+router.patch(
+  "/users/avatars",
+  JwtAuthMiddleware(),
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      const { path: tempPath, originalname } = req.file;
+      const newFileName = `${req.user.id}-${originalname}`;
+      const targetPath = path.join(
+        __dirname,
+        "../../public/avatars",
+        newFileName
+      );
+
+      const image = await jimp.read(tempPath);
+      await image.resize(250, 250).writeAsync(targetPath);
+
+      fs.unlinkSync(tempPath);
+
+      req.user.avatarURL = `/avatars/${newFileName}`;
+      await req.user.save();
+
+      res.status(200).json({ avatarURL: req.user.avatarURL });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Something went wrong" });
+    }
+  }
+);
 
 module.exports = router;

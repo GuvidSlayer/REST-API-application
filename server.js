@@ -27,6 +27,8 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
+app.use(express.static("public"));
+
 JWTStrategy();
 
 app.use("/api", usersRouter);

@@ -14,6 +14,7 @@ const generateAvatarURL = require("../../service/models/avatar.js");
 const upload = require("../../middleware/upload.js");
 const mg = require("../../config.js");
 
+
 dotenv.config();
 
 const router = express.Router();
@@ -31,8 +32,10 @@ const userSchema = Joi.object({
     .default("starter"),
   token: Joi.string().allow(null).default(null),
   avatarURL: Joi.string().uri().optional(),
+
   verify: Joi.boolean().default(false),
   verificationToken: Joi.string().optional(),
+
 });
 
 router.post("/users/register", async (req, res) => {
@@ -59,7 +62,9 @@ router.post("/users/register", async (req, res) => {
       password: hashedPassword,
       subscription: "starter",
       avatarURL,
+
       verify: false,
+
     });
 
     await newUser.save();
@@ -135,6 +140,7 @@ router.get("/users/verify/:verificationToken", async (req, res) => {
     await user.save();
 
     res.status(200).json({ message: "Verification successful" });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Something went wrong" });

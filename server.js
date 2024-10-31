@@ -3,11 +3,11 @@ const passport = require("passport");
 const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+
 const apiRouter = require("./routes/api/contacts.js");
 const usersRouter = require("./routes/api/users.js");
-const dotenv = require("dotenv");
 const JWTStrategy = require("./middleware/passport.js");
-const JwtAuthMiddleware = require("./middleware/auth.js");
 
 dotenv.config();
 
@@ -32,7 +32,7 @@ app.use(express.static("public"));
 JWTStrategy();
 
 app.use("/api", usersRouter);
-app.use("/api", JwtAuthMiddleware(), apiRouter);
+app.use("/api", apiRouter);
 
 app.use((req, res) => {
   res.status(404).json({ message: `Not found - ${req.path}` });

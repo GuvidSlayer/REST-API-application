@@ -1,6 +1,7 @@
 const passport = require("passport");
-const User = require("../service/models/user.js");
 const { ExtractJwt, Strategy: JwtStrategy } = require("passport-jwt");
+
+const User = require("../service/models/user.js");
 
 function JWTStrategy() {
   const secret = process.env.SECRET;
